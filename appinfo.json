@@ -1,0 +1,20 @@
+{
+  "uuid": "ecc8f112-318f-4ee2-be11-53c63b8a1139",
+  "shortName": "My Simple Analog",
+  "longName": "My Simple Analog",
+  "companyName": "Pebble Technology",
+  "versionCode": 1,
+  "versionLabel": "1.0",
+  "watchapp": {
+    "watchface": true
+  },
+  "appKeys": {},
+  "resources": {
+    "media": []
+  },
+  "targetPlatforms": [
+    "aplite",
+    "basalt"
+  ],
+  "sdkVersion": "3"
+}
