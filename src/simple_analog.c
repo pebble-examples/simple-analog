@@ -15,6 +15,8 @@ static void bg_update_proc(Layer *layer, GContext *ctx) {
   graphics_fill_rect(ctx, layer_get_bounds(layer), 0, GCornerNone);
   graphics_context_set_fill_color(ctx, GColorWhite);
   for (int i = 0; i < NUM_CLOCK_TICKS; ++i) {
+    const int x_offset = PBL_IF_ROUND_ELSE(18, 0);
+    gpath_move_to(s_tick_paths[i], GPoint(x_offset, 0));
     gpath_draw_filled(ctx, s_tick_paths[i]);
   }
 }
@@ -22,7 +24,8 @@ static void bg_update_proc(Layer *layer, GContext *ctx) {
 static void hands_update_proc(Layer *layer, GContext *ctx) {
   GRect bounds = layer_get_bounds(layer);
   GPoint center = grect_center_point(&bounds);
-  int16_t second_hand_length = bounds.size.w / 2;
+
+  const int16_t second_hand_length = PBL_IF_ROUND_ELSE((bounds.size.w / 2) - 19, bounds.size.w / 2);
 
   time_t now = time(NULL);
   struct tm *t = localtime(&now);
@@ -80,7 +83,9 @@ static void window_load(Window *window) {
   layer_set_update_proc(s_date_layer, date_update_proc);
   layer_add_child(window_layer, s_date_layer);
 
-  s_day_label = text_layer_create(GRect(46, 114, 27, 20));
+  s_day_label = text_layer_create(PBL_IF_ROUND_ELSE(
+    GRect(63, 114, 27, 20),
+    GRect(46, 114, 27, 20)));
   text_layer_set_text(s_day_label, s_day_buffer);
   text_layer_set_background_color(s_day_label, GColorBlack);
   text_layer_set_text_color(s_day_label, GColorWhite);
@@ -88,7 +93,9 @@ static void window_load(Window *window) {
 
   layer_add_child(s_date_layer, text_layer_get_layer(s_day_label));
 
-  s_num_label = text_layer_create(GRect(73, 114, 18, 20));
+  s_num_label = text_layer_create(PBL_IF_ROUND_ELSE(
+    GRect(90, 114, 18, 20),
+    GRect(73, 114, 18, 20)));
   text_layer_set_text(s_num_label, s_num_buffer);
   text_layer_set_background_color(s_num_label, GColorBlack);
   text_layer_set_text_color(s_num_label, GColorWhite);
