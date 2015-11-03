@@ -2,7 +2,7 @@
 
 #include "pebble.h"
 
-static Window *window;
+static Window *s_window;
 static Layer *s_simple_bg_layer, *s_date_layer, *s_hands_layer;
 static TextLayer *s_day_label, *s_num_label;
 
@@ -16,7 +16,8 @@ static void bg_update_proc(Layer *layer, GContext *ctx) {
   graphics_context_set_fill_color(ctx, GColorWhite);
   for (int i = 0; i < NUM_CLOCK_TICKS; ++i) {
     const int x_offset = PBL_IF_ROUND_ELSE(18, 0);
-    gpath_move_to(s_tick_paths[i], GPoint(x_offset, 0));
+    const int y_offset = PBL_IF_ROUND_ELSE(6, 0);
+    gpath_move_to(s_tick_paths[i], GPoint(x_offset, y_offset));
     gpath_draw_filled(ctx, s_tick_paths[i]);
   }
 }
@@ -68,7 +69,7 @@ static void date_update_proc(Layer *layer, GContext *ctx) {
 }
 
 static void handle_second_tick(struct tm *tick_time, TimeUnits units_changed) {
-  layer_mark_dirty(window_get_root_layer(window));
+  layer_mark_dirty(window_get_root_layer(s_window));
 }
 
 static void window_load(Window *window) {
@@ -119,12 +120,12 @@ static void window_unload(Window *window) {
 }
 
 static void init() {
-  window = window_create();
-  window_set_window_handlers(window, (WindowHandlers) {
+  s_window = window_create();
+  window_set_window_handlers(s_window, (WindowHandlers) {
     .load = window_load,
     .unload = window_unload,
   });
-  window_stack_push(window, true);
+  window_stack_push(s_window, true);
 
   s_day_buffer[0] = '\0';
   s_num_buffer[0] = '\0';
@@ -133,7 +134,7 @@ static void init() {
   s_minute_arrow = gpath_create(&MINUTE_HAND_POINTS);
   s_hour_arrow = gpath_create(&HOUR_HAND_POINTS);
 
-  Layer *window_layer = window_get_root_layer(window);
+  Layer *window_layer = window_get_root_layer(s_window);
   GRect bounds = layer_get_bounds(window_layer);
   GPoint center = grect_center_point(&bounds);
   gpath_move_to(s_minute_arrow, center);
@@ -155,7 +156,7 @@ static void deinit() {
   }
 
   tick_timer_service_unsubscribe();
-  window_destroy(window);
+  window_destroy(s_window);
 }
 
 int main() {
