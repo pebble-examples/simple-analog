@@ -2,7 +2,7 @@
 
 #include "pebble.h"
 
-static Window *window;
+static Window *s_window;
 static Layer *s_simple_bg_layer, *s_date_layer, *s_hands_layer;
 static TextLayer *s_day_label, *s_num_label;
 
@@ -15,6 +15,9 @@ static void bg_update_proc(Layer *layer, GContext *ctx) {
   graphics_fill_rect(ctx, layer_get_bounds(layer), 0, GCornerNone);
   graphics_context_set_fill_color(ctx, GColorWhite);
   for (int i = 0; i < NUM_CLOCK_TICKS; ++i) {
+    const int x_offset = PBL_IF_ROUND_ELSE(18, 0);
+    const int y_offset = PBL_IF_ROUND_ELSE(6, 0);
+    gpath_move_to(s_tick_paths[i], GPoint(x_offset, y_offset));
     gpath_draw_filled(ctx, s_tick_paths[i]);
   }
 }
@@ -22,7 +25,8 @@ static void bg_update_proc(Layer *layer, GContext *ctx) {
 static void hands_update_proc(Layer *layer, GContext *ctx) {
   GRect bounds = layer_get_bounds(layer);
   GPoint center = grect_center_point(&bounds);
-  int16_t second_hand_length = bounds.size.w / 2;
+
+  const int16_t second_hand_length = PBL_IF_ROUND_ELSE((bounds.size.w / 2) - 19, bounds.size.w / 2);
 
   time_t now = time(NULL);
   struct tm *t = localtime(&now);
@@ -65,7 +69,7 @@ static void date_update_proc(Layer *layer, GContext *ctx) {
 }
 
 static void handle_second_tick(struct tm *tick_time, TimeUnits units_changed) {
-  layer_mark_dirty(window_get_root_layer(window));
+  layer_mark_dirty(window_get_root_layer(s_window));
 }
 
 static void window_load(Window *window) {
@@ -80,7 +84,9 @@ static void window_load(Window *window) {
   layer_set_update_proc(s_date_layer, date_update_proc);
   layer_add_child(window_layer, s_date_layer);
 
-  s_day_label = text_layer_create(GRect(46, 114, 27, 20));
+  s_day_label = text_layer_create(PBL_IF_ROUND_ELSE(
+    GRect(63, 114, 27, 20),
+    GRect(46, 114, 27, 20)));
   text_layer_set_text(s_day_label, s_day_buffer);
   text_layer_set_background_color(s_day_label, GColorBlack);
   text_layer_set_text_color(s_day_label, GColorWhite);
@@ -88,7 +94,9 @@ static void window_load(Window *window) {
 
   layer_add_child(s_date_layer, text_layer_get_layer(s_day_label));
 
-  s_num_label = text_layer_create(GRect(73, 114, 18, 20));
+  s_num_label = text_layer_create(PBL_IF_ROUND_ELSE(
+    GRect(90, 114, 18, 20),
+    GRect(73, 114, 18, 20)));
   text_layer_set_text(s_num_label, s_num_buffer);
   text_layer_set_background_color(s_num_label, GColorBlack);
   text_layer_set_text_color(s_num_label, GColorWhite);
@@ -112,12 +120,12 @@ static void window_unload(Window *window) {
 }
 
 static void init() {
-  window = window_create();
-  window_set_window_handlers(window, (WindowHandlers) {
+  s_window = window_create();
+  window_set_window_handlers(s_window, (WindowHandlers) {
     .load = window_load,
     .unload = window_unload,
   });
-  window_stack_push(window, true);
+  window_stack_push(s_window, true);
 
   s_day_buffer[0] = '\0';
   s_num_buffer[0] = '\0';
@@ -126,7 +134,7 @@ static void init() {
   s_minute_arrow = gpath_create(&MINUTE_HAND_POINTS);
   s_hour_arrow = gpath_create(&HOUR_HAND_POINTS);
 
-  Layer *window_layer = window_get_root_layer(window);
+  Layer *window_layer = window_get_root_layer(s_window);
   GRect bounds = layer_get_bounds(window_layer);
   GPoint center = grect_center_point(&bounds);
   gpath_move_to(s_minute_arrow, center);
@@ -148,7 +156,7 @@ static void deinit() {
   }
 
   tick_timer_service_unsubscribe();
-  window_destroy(window);
+  window_destroy(s_window);
 }
 
 int main() {
