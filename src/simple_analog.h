@@ -8,7 +8,7 @@ static const struct GPathInfo ANALOG_BG_POINTS[] = {
   { 4,
     (GPoint []) {
       {68, 0},
-      {71, 1},
+      {71, 0},
       {71, 12},
       {68, 12}
     }
